@@ -1,1 +1,5 @@
-console.log("Hello World");
+import { App } from "./app";
+
+const app = new App();
+
+app.listen();
