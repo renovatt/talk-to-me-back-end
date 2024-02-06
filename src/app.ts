@@ -29,19 +29,56 @@ class App {
 
   private socketEvents(socket: Socket) {
     console.log('Socket connected: ' + socket.id)
-    
     socket.on('subscribe', (data) => {
       console.log('room: ' + data.roomId);
       socket.join(data.roomId);
+      socket.join(data.socketId);
 
-    socket.on('chat',(data) => {
+      const roomsSession = Array.from(socket.rooms);
+
+      if (roomsSession.length > 1) {
+        socket.to(data.roomId).emit('new-user', {
+          socketId: socket.id,
+          username: data.username,
+        });
+      }
+    });
+
+    socket.on('newUserStart', (data) => {
+      console.log('new user connected: ', data)
+      socket.to(data.to).emit('newUserStart', { 
+        sender: data.sender
+       });
+    });
+
+    socket.on('sdp', (data) => {
+      console.log('sdp: ', data)
+      socket.to(data.to).emit('sdp', {
+        description: data.description,
+        sender: data.sender,
+      });
+    });
+
+    socket.on('ice-candidates', (data) => {
+      console.log('ice-candidates: ', data)
+      socket.to(data.to).emit('ice-candidates', {
+        candidate: data.candidate,
+        sender: data.sender,
+      });
+    });
+
+    socket.on('chat', (data) => {
       console.log(data)
       socket.broadcast.to(data.roomId).emit('chat', {
         message: data.message,
         username: data.username,
         time: data.time,
       });
-    })
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected: ' + socket.id)
+      socket.disconnect();
     });
   }
 }
